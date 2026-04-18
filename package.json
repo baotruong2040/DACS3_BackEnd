@@ -1,0 +1,51 @@
+{
+  "name": "back-end",
+  "version": "1.0.0",
+  "description": "R&T Express backend server",
+  "main": "src/server.js",
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js",
+    "lint": "eslint .",
+    "test": "node --localstorage-file=.jest-localstorage ./node_modules/jest/bin/jest.js --runInBand",
+    "test:single": "node --localstorage-file=.jest-localstorage ./node_modules/jest/bin/jest.js --runInBand --testPathPattern",
+    "db:migrate": "node src/scripts/runMigrations.js",
+    "db:seed-admin": "node src/scripts/seedAdmin.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/baotruong2040/DACS3_BackEnd.git"
+  },
+  "keywords": [
+    "express",
+    "mysql",
+    "jwt",
+    "rt-express"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/baotruong2040/DACS3_BackEnd/issues"
+  },
+  "homepage": "https://github.com/baotruong2040/DACS3_BackEnd#readme",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "firebase-admin": "^13.8.0",
+    "jsonwebtoken": "^9.0.3",
+    "morgan": "^1.10.1",
+    "mysql2": "^3.22.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "eslint-config-prettier": "^10.1.8",
+    "jest": "^29.7.0",
+    "nodemon": "^3.1.14",
+    "supertest": "^7.2.2"
+  }
+}

@@ -1,0 +1,159 @@
+const { executeQuery } = require("../db/query");
+const { AppError } = require("../utils/appError");
+const { successResponse } = require("../utils/response");
+
+async function listProducts(_req, res) {
+  const rows = await executeQuery(
+    `
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.image_url,
+        p.is_available,
+        p.category_id,
+        c.name AS category_name
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      WHERE p.is_available = TRUE
+      ORDER BY p.id DESC
+    `
+  );
+
+  return successResponse(res, "Products fetched successfully", rows);
+}
+
+async function getProductById(req, res) {
+  const productId = req.params.id;
+
+  const rows = await executeQuery(
+    `
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.image_url,
+        p.is_available,
+        p.category_id,
+        c.name AS category_name
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      WHERE p.id = ? AND p.is_available = TRUE
+      LIMIT 1
+    `,
+    [productId]
+  );
+
+  if (rows.length === 0) {
+    throw new AppError("Product not found", 404);
+  }
+
+  return successResponse(res, "Product fetched successfully", rows[0]);
+}
+
+async function createProduct(req, res) {
+  const {
+    name,
+    description = null,
+    price,
+    image_url = null,
+    category_id,
+    is_available = true,
+  } = req.body;
+
+  const categories = await executeQuery(
+    "SELECT id FROM categories WHERE id = ? LIMIT 1",
+    [category_id]
+  );
+  if (categories.length === 0) {
+    throw new AppError("Category not found", 404);
+  }
+
+  const result = await executeQuery(
+    `
+      INSERT INTO products (name, description, price, image_url, category_id, is_available)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `,
+    [name, description, price, image_url, category_id, is_available]
+  );
+
+  return successResponse(
+    res,
+    "Product created successfully",
+    { product_id: result.insertId },
+    201
+  );
+}
+
+async function updateProduct(req, res) {
+  const productId = req.params.id;
+  const payload = req.body;
+
+  const products = await executeQuery(
+    "SELECT id FROM products WHERE id = ? LIMIT 1",
+    [productId]
+  );
+  if (products.length === 0) {
+    throw new AppError("Product not found", 404);
+  }
+
+  if (payload.category_id) {
+    const categories = await executeQuery(
+      "SELECT id FROM categories WHERE id = ? LIMIT 1",
+      [payload.category_id]
+    );
+    if (categories.length === 0) {
+      throw new AppError("Category not found", 404);
+    }
+  }
+
+  const fields = Object.keys(payload);
+  const setClause = fields.map((field) => `${field} = ?`).join(", ");
+  const params = [...fields.map((field) => payload[field]), productId];
+
+  await executeQuery(`UPDATE products SET ${setClause} WHERE id = ?`, params);
+
+  return successResponse(res, "Product updated successfully", { product_id: productId });
+}
+
+async function listCategories(_req, res) {
+  const rows = await executeQuery(
+    `
+      SELECT id, name, description, image_url
+      FROM categories
+      ORDER BY id DESC
+    `
+  );
+
+  return successResponse(res, "Categories fetched successfully", rows);
+}
+
+async function createCategory(req, res) {
+  const { name, description = null, image_url = null } = req.body;
+
+  const result = await executeQuery(
+    `
+      INSERT INTO categories (name, description, image_url)
+      VALUES (?, ?, ?)
+    `,
+    [name, description, image_url]
+  );
+
+  return successResponse(
+    res,
+    "Category created successfully",
+    { category_id: result.insertId },
+    201
+  );
+}
+
+module.exports = {
+  listProducts,
+  getProductById,
+  createProduct,
+  updateProduct,
+  listCategories,
+  createCategory,
+};

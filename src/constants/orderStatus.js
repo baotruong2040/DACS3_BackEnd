@@ -1,0 +1,28 @@
+const ORDER_STATUS = Object.freeze({
+  PENDING: "PENDING",
+  PREPARING: "PREPARING",
+  READY: "READY",
+  DELIVERING: "DELIVERING",
+  DELIVERED: "DELIVERED",
+  CANCELLED: "CANCELLED",
+});
+
+const VALID_TRANSITIONS = Object.freeze({
+  [ORDER_STATUS.PENDING]: [ORDER_STATUS.PREPARING, ORDER_STATUS.CANCELLED],
+  [ORDER_STATUS.PREPARING]: [ORDER_STATUS.READY],
+  [ORDER_STATUS.READY]: [ORDER_STATUS.DELIVERING],
+  [ORDER_STATUS.DELIVERING]: [ORDER_STATUS.DELIVERED],
+  [ORDER_STATUS.DELIVERED]: [],
+  [ORDER_STATUS.CANCELLED]: [],
+});
+
+function isValidStatusTransition(fromStatus, toStatus) {
+  const next = VALID_TRANSITIONS[fromStatus] || [];
+  return next.includes(toStatus);
+}
+
+module.exports = {
+  ORDER_STATUS,
+  VALID_TRANSITIONS,
+  isValidStatusTransition,
+};
