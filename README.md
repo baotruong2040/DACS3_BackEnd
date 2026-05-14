@@ -35,3 +35,9 @@ R&T Express backend server built with Express.js + MySQL.
 ## API docs
 
 See `docs/API_REFERENCE.md`.
+
+## Image uploads
+
+- Product and category endpoints accept an optional file field named `image` via `multipart/form-data`.
+- Uploaded files are served from `/uploads/...`.
+- Set `PUBLIC_BASE_URL` in production so returned image URLs are absolute HTTPS URLs.

@@ -11,6 +11,7 @@ const { ROLES } = require("../constants/roles");
 const { authenticate } = require("../middleware/authenticate");
 const { authorize } = require("../middleware/authorize");
 const { validate } = require("../middleware/validate");
+const { createImageUploadMiddleware } = require("../middleware/uploadImage");
 const { asyncHandler } = require("../utils/asyncHandler");
 const {
   createCategorySchema,
@@ -20,6 +21,8 @@ const {
 } = require("../validators/catalogValidator");
 
 const catalogRouter = express.Router();
+const uploadProductImage = createImageUploadMiddleware("products");
+const uploadCategoryImage = createImageUploadMiddleware("categories");
 
 catalogRouter.get("/products", asyncHandler(listProducts));
 catalogRouter.get(
@@ -31,6 +34,7 @@ catalogRouter.post(
   "/products",
   authenticate,
   authorize(ROLES.ADMIN),
+  uploadProductImage,
   validate({ body: createProductSchema }),
   asyncHandler(createProduct)
 );
@@ -38,6 +42,7 @@ catalogRouter.put(
   "/products/:id",
   authenticate,
   authorize(ROLES.ADMIN),
+  uploadProductImage,
   validate({ params: idParamSchema, body: updateProductSchema }),
   asyncHandler(updateProduct)
 );
@@ -47,6 +52,7 @@ catalogRouter.post(
   "/categories",
   authenticate,
   authorize(ROLES.ADMIN),
+  uploadCategoryImage,
   validate({ body: createCategorySchema }),
   asyncHandler(createCategory)
 );

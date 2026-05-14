@@ -51,14 +51,14 @@ All responses use the envelope:
 
 ### POST `/api/products`
 - **Role:** `ADMIN`
-- **Body:** `name`, `price`, `category_id`, optional `description`, `image_url`, `is_available`
+- **Body:** `multipart/form-data` or JSON with `name`, `price`, `category_id`, optional `description`, `image_url`, `is_available`, and optional file field `image`
 - **Success:** `201`, returns `product_id`
 - **Errors:** `400`, `401`, `403`, `404`
 
 ### PUT `/api/products/:id`
 - **Role:** `ADMIN`
 - **Params:** `id` (integer)
-- **Body:** at least one updatable field (`name`, `description`, `price`, `image_url`, `category_id`, `is_available`)
+- **Body:** `multipart/form-data` or JSON with at least one updatable field (`name`, `description`, `price`, `image_url`, `category_id`, `is_available`) and optional file field `image`
 - **Success:** `200`, returns `product_id`
 - **Errors:** `400`, `401`, `403`, `404`
 
@@ -68,7 +68,7 @@ All responses use the envelope:
 
 ### POST `/api/categories`
 - **Role:** `ADMIN`
-- **Body:** `name`, optional `description`, `image_url`
+- **Body:** `multipart/form-data` or JSON with `name`, optional `description`, `image_url`, and optional file field `image`
 - **Success:** `201`, returns `category_id`
 - **Errors:** `400`, `401`, `403`
 

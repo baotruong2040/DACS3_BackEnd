@@ -1,5 +1,6 @@
 const { executeQuery } = require("../db/query");
 const { AppError } = require("../utils/appError");
+const { buildPublicUrl } = require("../utils/publicUrl");
 const { successResponse } = require("../utils/response");
 
 async function listProducts(_req, res) {
@@ -62,6 +63,9 @@ async function createProduct(req, res) {
     category_id,
     is_available = true,
   } = req.body;
+  const storedImageUrl = req.uploadedImagePath
+    ? buildPublicUrl(req, req.uploadedImagePath)
+    : image_url;
 
   const categories = await executeQuery(
     "SELECT id FROM categories WHERE id = ? LIMIT 1",
@@ -76,7 +80,7 @@ async function createProduct(req, res) {
       INSERT INTO products (name, description, price, image_url, category_id, is_available)
       VALUES (?, ?, ?, ?, ?, ?)
     `,
-    [name, description, price, image_url, category_id, is_available]
+    [name, description, price, storedImageUrl, category_id, is_available]
   );
 
   return successResponse(
@@ -90,6 +94,7 @@ async function createProduct(req, res) {
 async function updateProduct(req, res) {
   const productId = req.params.id;
   const payload = req.body;
+  const updatePayload = { ...payload };
 
   const products = await executeQuery(
     "SELECT id FROM products WHERE id = ? LIMIT 1",
@@ -109,9 +114,13 @@ async function updateProduct(req, res) {
     }
   }
 
-  const fields = Object.keys(payload);
+  if (req.uploadedImagePath) {
+   updatePayload.image_url = buildPublicUrl(req, req.uploadedImagePath);
+  }
+
+  const fields = Object.keys(updatePayload);
   const setClause = fields.map((field) => `${field} = ?`).join(", ");
-  const params = [...fields.map((field) => payload[field]), productId];
+  const params = [...fields.map((field) => updatePayload[field]), productId];
 
   await executeQuery(`UPDATE products SET ${setClause} WHERE id = ?`, params);
 
@@ -132,13 +141,16 @@ async function listCategories(_req, res) {
 
 async function createCategory(req, res) {
   const { name, description = null, image_url = null } = req.body;
+  const storedImageUrl = req.uploadedImagePath
+    ? buildPublicUrl(req, req.uploadedImagePath)
+    : image_url;
 
   const result = await executeQuery(
     `
       INSERT INTO categories (name, description, image_url)
       VALUES (?, ?, ?)
     `,
-    [name, description, image_url]
+    [name, description, storedImageUrl]
   );
 
   return successResponse(
