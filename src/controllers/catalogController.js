@@ -139,6 +139,56 @@ async function listCategories(_req, res) {
   return successResponse(res, "Categories fetched successfully", rows);
 }
 
+async function listProductsByCategory(req, res) {
+  const categoryId = req.params.id;
+  const { page, page_size } = req.query;
+  const offset = (page - 1) * page_size;
+
+  const categories = await executeQuery(
+    "SELECT id FROM categories WHERE id = ? LIMIT 1",
+    [categoryId]
+  );
+  if (categories.length === 0) {
+    throw new AppError("Category not found", 404);
+  }
+
+  const products = await executeQuery(
+    `
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.image_url,
+        p.is_available,
+        p.category_id,
+        c.name AS category_name
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      WHERE p.category_id = ? AND p.is_available = TRUE
+      ORDER BY p.id DESC
+      LIMIT ? OFFSET ?
+    `,
+    [categoryId, page_size, offset]
+  );
+
+  const totalRows = await executeQuery(
+    `
+      SELECT COUNT(*) AS total
+      FROM products
+      WHERE category_id = ? AND is_available = TRUE
+    `,
+    [categoryId]
+  );
+
+  return successResponse(res, "Category products fetched successfully", {
+    products,
+    page,
+    page_size,
+    total: totalRows[0].total,
+  });
+}
+
 async function createCategory(req, res) {
   const { name, description = null, image_url = null } = req.body;
   const storedImageUrl = req.uploadedImagePath
@@ -167,5 +217,6 @@ module.exports = {
   createProduct,
   updateProduct,
   listCategories,
+  listProductsByCategory,
   createCategory,
 };

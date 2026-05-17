@@ -46,9 +46,15 @@ const updateProductSchema = z
     message: "At least one field must be provided",
   });
 
+const listCategoryProductsQuerySchema = z.object({
+  page: z.coerce.number().int().positive().optional().default(1),
+  page_size: z.coerce.number().int().positive().max(100).optional().default(20),
+});
+
 module.exports = {
   idParamSchema,
   createCategorySchema,
   createProductSchema,
   updateProductSchema,
+  listCategoryProductsQuerySchema,
 };

@@ -10,7 +10,12 @@ function validate({ body, params, query }) {
         req.params = params.parse(req.params);
       }
       if (query) {
-        req.query = query.parse(req.query);
+        Object.defineProperty(req, "query", {
+          value: query.parse(req.query),
+          writable: true,
+          enumerable: true,
+          configurable: true,
+        });
       }
       return next();
     } catch (error) {

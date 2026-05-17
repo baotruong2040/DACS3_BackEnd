@@ -5,6 +5,7 @@ const {
   createProduct,
   updateProduct,
   listCategories,
+  listProductsByCategory,
   createCategory,
 } = require("../controllers/catalogController");
 const { ROLES } = require("../constants/roles");
@@ -17,6 +18,7 @@ const {
   createCategorySchema,
   createProductSchema,
   idParamSchema,
+  listCategoryProductsQuerySchema,
   updateProductSchema,
 } = require("../validators/catalogValidator");
 
@@ -48,6 +50,11 @@ catalogRouter.put(
 );
 
 catalogRouter.get("/categories", asyncHandler(listCategories));
+catalogRouter.get(
+  "/categories/:id/products",
+  validate({ params: idParamSchema, query: listCategoryProductsQuerySchema }),
+  asyncHandler(listProductsByCategory)
+);
 catalogRouter.post(
   "/categories",
   authenticate,
