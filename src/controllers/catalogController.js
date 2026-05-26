@@ -189,6 +189,66 @@ async function listProductsByCategory(req, res) {
   });
 }
 
+async function searchProducts(req, res) {
+  const { q, category_ids, sort_by, sort_order, page, page_size } = req.query;
+  const offset = (page - 1) * page_size;
+
+  const whereConditions = ["p.is_available = TRUE"];
+  const params = [];
+
+  if (q) {
+    whereConditions.push("(p.name LIKE ? OR p.description LIKE ?)");
+    const searchTerm = `%${q}%`;
+    params.push(searchTerm, searchTerm);
+  }
+
+  if (category_ids.length > 0) {
+    const placeholders = category_ids.map(() => "?").join(",");
+    whereConditions.push(`p.category_id IN (${placeholders})`);
+    params.push(...category_ids);
+  }
+
+  const whereClause = whereConditions.join(" AND ");
+  const orderBy = sort_by === "name" ? "p.name" : sort_by === "price" ? "p.price" : "p.id";
+  const orderDirection = sort_order === "asc" ? "ASC" : "DESC";
+
+  const products = await executeQuery(
+    `
+      SELECT
+        p.id,
+        p.name,
+        p.description,
+        p.price,
+        p.image_url,
+        p.is_available,
+        p.category_id,
+        c.name AS category_name
+      FROM products p
+      INNER JOIN categories c ON c.id = p.category_id
+      WHERE ${whereClause}
+      ORDER BY ${orderBy} ${orderDirection}
+      LIMIT ? OFFSET ?
+    `,
+    [...params, page_size, offset]
+  );
+
+  const countResult = await executeQuery(
+    `
+      SELECT COUNT(*) AS total
+      FROM products p
+      WHERE ${whereClause}
+    `,
+    params
+  );
+
+  return successResponse(res, "Products search results fetched successfully", {
+    products,
+    page,
+    page_size,
+    total: countResult[0].total,
+  });
+}
+
 async function createCategory(req, res) {
   const { name, description = null, image_url = null } = req.body;
   const storedImageUrl = req.uploadedImagePath
@@ -218,5 +278,6 @@ module.exports = {
   updateProduct,
   listCategories,
   listProductsByCategory,
+  searchProducts,
   createCategory,
 };

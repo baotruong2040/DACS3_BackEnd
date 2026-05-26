@@ -17,17 +17,32 @@ const createOrderSchema = z.object({
     .min(1),
 });
 
+const orderStatusQuerySchema = z.preprocess((value) => {
+  if (Array.isArray(value)) {
+    value = value.find((item) => typeof item === "string" && item.trim()) || undefined;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const normalized = value.trim().toUpperCase();
+  if (!normalized || normalized === "ALL") {
+    return undefined;
+  }
+
+  return normalized;
+}, z.enum([
+  ORDER_STATUS.PENDING,
+  ORDER_STATUS.PREPARING,
+  ORDER_STATUS.READY,
+  ORDER_STATUS.DELIVERING,
+  ORDER_STATUS.DELIVERED,
+  ORDER_STATUS.CANCELLED,
+]).optional());
+
 const listOrdersQuerySchema = z.object({
-  status: z
-    .enum([
-      ORDER_STATUS.PENDING,
-      ORDER_STATUS.PREPARING,
-      ORDER_STATUS.READY,
-      ORDER_STATUS.DELIVERING,
-      ORDER_STATUS.DELIVERED,
-      ORDER_STATUS.CANCELLED,
-    ])
-    .optional(),
+  status: orderStatusQuerySchema,
   page: z.coerce.number().int().positive().optional().default(1),
   page_size: z.coerce.number().int().positive().max(100).optional().default(20),
 });

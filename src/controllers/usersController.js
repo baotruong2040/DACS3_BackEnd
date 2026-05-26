@@ -9,10 +9,8 @@ async function listStaff(_req, res) {
     `
       SELECT id, username, full_name, email, phone, address, role, created_at
       FROM users
-      WHERE role = ?
       ORDER BY id DESC
-    `,
-    [ROLES.STAFF]
+    `
   );
 
   return successResponse(res, "Staff users fetched successfully", rows);

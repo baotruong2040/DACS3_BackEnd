@@ -1,10 +1,12 @@
 const express = require("express");
 const { createStaff, listStaff, updateUser } = require("../controllers/usersController");
+const { listOrdersByUserId } = require("../controllers/ordersController");
 const { ROLES } = require("../constants/roles");
 const { authenticate } = require("../middleware/authenticate");
 const { authorize } = require("../middleware/authorize");
 const { validate } = require("../middleware/validate");
 const { asyncHandler } = require("../utils/asyncHandler");
+const { listOrdersQuerySchema } = require("../validators/orderValidator");
 const {
   createStaffSchema,
   updateUserSchema,
@@ -32,6 +34,12 @@ usersRouter.put(
   authorize(ROLES.ADMIN),
   validate({ params: userIdParamSchema, body: updateUserSchema }),
   asyncHandler(updateUser)
+);
+usersRouter.get(
+  "/users/:id/orders",
+  authenticate,
+  validate({ params: userIdParamSchema, query: listOrdersQuerySchema }),
+  asyncHandler(listOrdersByUserId)
 );
 
 module.exports = { usersRouter };

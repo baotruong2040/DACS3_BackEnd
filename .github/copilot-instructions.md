@@ -43,3 +43,4 @@
 ## Reference files
 - `README.md` for setup and script names.
 - `docs/API_REFERENCE.md` for endpoint and payload summaries.
+- `.github/CLAUDE.md` for rules.

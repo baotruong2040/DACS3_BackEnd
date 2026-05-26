@@ -51,10 +51,30 @@ const listCategoryProductsQuerySchema = z.object({
   page_size: z.coerce.number().int().positive().max(100).optional().default(20),
 });
 
+const searchProductsQuerySchema = z.object({
+  q: z.string().max(255).optional().default(""),
+  category_ids: z
+    .string()
+    .optional()
+    .default("")
+    .transform((val) => {
+      if (!val) return [];
+      return val
+        .split(",")
+        .map((id) => parseInt(id, 10))
+        .filter((id) => !Number.isNaN(id) && id > 0);
+    }),
+  sort_by: z.enum(["id", "name", "price"]).optional().default("id"),
+  sort_order: z.enum(["asc", "desc"]).optional().default("desc"),
+  page: z.coerce.number().int().positive().optional().default(1),
+  page_size: z.coerce.number().int().positive().max(100).optional().default(20),
+});
+
 module.exports = {
   idParamSchema,
   createCategorySchema,
   createProductSchema,
   updateProductSchema,
   listCategoryProductsQuerySchema,
+  searchProductsQuerySchema,
 };

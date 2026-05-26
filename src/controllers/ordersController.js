@@ -93,12 +93,37 @@ async function createOrder(req, res) {
 }
 
 async function listOrders(req, res) {
+  return listOrdersByFilter(req, res);
+}
+
+async function listOrdersByUserId(req, res) {
+  const userId = req.params.id;
+
+  const users = await executeQuery("SELECT id FROM users WHERE id = ? LIMIT 1", [userId]);
+  if (users.length === 0) {
+    throw new AppError("User not found", 404);
+  }
+
+  return listOrdersByFilter(req, res, userId);
+}
+
+async function listOrdersByFilter(req, res, userId = null) {
   const { status, page, page_size } = req.query;
   const offset = (page - 1) * page_size;
-  const whereClause = status ? "WHERE o.status = ?" : "";
-  const params = status ? [status, page_size, offset] : [page_size, offset];
-  const countParams = status ? [status] : [];
+  const conditions = [];
+  const params = [];
 
+  if (userId !== null) {
+    conditions.push("o.user_id = ?");
+    params.push(userId);
+  }
+
+  if (status) {
+    conditions.push("o.status = ?");
+    params.push(status);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
   const rows = await executeQuery(
     `
       SELECT
@@ -114,7 +139,7 @@ async function listOrders(req, res) {
       ORDER BY o.created_at DESC
       LIMIT ? OFFSET ?
     `,
-    params
+    [...params, page_size, offset]
   );
 
   const totalRows = await executeQuery(
@@ -123,7 +148,7 @@ async function listOrders(req, res) {
       FROM orders o
       ${whereClause}
     `,
-    countParams
+    params
   );
 
   return successResponse(res, "Orders fetched successfully", {
@@ -233,6 +258,7 @@ async function updateOrderStatus(req, res) {
 module.exports = {
   createOrder,
   listOrders,
+  listOrdersByUserId,
   getOrderById,
   updateOrderStatus,
 };
