@@ -129,12 +129,14 @@ async function listOrdersByFilter(req, res, userId = null) {
       SELECT
         o.id,
         o.user_id,
+        u.full_name AS customer_name,
         o.total_amount,
         o.status,
         o.delivery_address,
         o.created_at,
         o.updated_at
       FROM orders o
+      INNER JOIN users u ON u.id = o.user_id
       ${whereClause}
       ORDER BY o.created_at DESC
       LIMIT ? OFFSET ?
@@ -164,15 +166,17 @@ async function getOrderById(req, res) {
   const orderRows = await executeQuery(
     `
       SELECT
-        id,
-        user_id,
-        total_amount,
-        status,
-        delivery_address,
-        created_at,
-        updated_at
-      FROM orders
-      WHERE id = ?
+        o.id,
+        o.user_id,
+        u.full_name AS customer_name,
+        o.total_amount,
+        o.status,
+        o.delivery_address,
+        o.created_at,
+        o.updated_at
+      FROM orders o
+      INNER JOIN users u ON u.id = o.user_id
+      WHERE o.id = ?
       LIMIT 1
     `,
     [orderId]
@@ -189,10 +193,15 @@ async function getOrderById(req, res) {
 
   const details = await executeQuery(
     `
-      SELECT product_id, quantity, price_at_order
-      FROM order_details
-      WHERE order_id = ?
-      ORDER BY id ASC
+      SELECT
+        od.product_id,
+        p.name AS product_name,
+        od.quantity,
+        od.price_at_order
+      FROM order_details od
+      INNER JOIN products p ON p.id = od.product_id
+      WHERE od.order_id = ?
+      ORDER BY od.id ASC
     `,
     [orderId]
   );

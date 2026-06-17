@@ -14,6 +14,8 @@ async function listProducts(_req, res) {
         p.image_url,
         p.is_available,
         p.category_id,
+        p.average_rating,
+        p.total_reviews,
         c.name AS category_name
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id
@@ -38,6 +40,8 @@ async function getProductById(req, res) {
         p.image_url,
         p.is_available,
         p.category_id,
+        p.average_rating,
+        p.total_reviews,
         c.name AS category_name
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id
@@ -162,6 +166,8 @@ async function listProductsByCategory(req, res) {
         p.image_url,
         p.is_available,
         p.category_id,
+        p.average_rating,
+        p.total_reviews,
         c.name AS category_name
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id
@@ -222,6 +228,8 @@ async function searchProducts(req, res) {
         p.image_url,
         p.is_available,
         p.category_id,
+        p.average_rating,
+        p.total_reviews,
         c.name AS category_name
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id

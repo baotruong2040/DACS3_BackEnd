@@ -39,6 +39,7 @@ describe("GET /api/orders", () => {
         {
           id: 1,
           user_id: 2,
+          customer_name: "Nguyen Van A",
           total_amount: "150000.00",
           status: "PENDING",
           delivery_address: "123 Nguyen Hue St",
@@ -61,6 +62,7 @@ describe("GET /api/orders", () => {
           {
             id: 1,
             user_id: 2,
+            customer_name: "Nguyen Van A",
             total_amount: "150000.00",
             status: "PENDING",
             delivery_address: "123 Nguyen Hue St",
@@ -143,6 +145,7 @@ describe("GET /api/orders", () => {
         {
           id: 11,
           user_id: 2,
+          customer_name: "Tran Thi B",
           total_amount: "250000.00",
           status: "PREPARING",
           delivery_address: "45 Le Loi St",
@@ -165,6 +168,7 @@ describe("GET /api/orders", () => {
           {
             id: 11,
             user_id: 2,
+            customer_name: "Tran Thi B",
             total_amount: "250000.00",
             status: "PREPARING",
             delivery_address: "45 Le Loi St",
@@ -212,5 +216,57 @@ describe("GET /api/orders", () => {
 
     expect(response.status).toBe(404);
     expect(response.body.message).toBe("User not found");
+  });
+
+  test("returns order details with customer and product names", async () => {
+    executeQuery
+      .mockResolvedValueOnce([
+        {
+          id: 42,
+          user_id: 2,
+          customer_name: "Tran Thi B",
+          total_amount: "100000.00",
+          status: "PENDING",
+          delivery_address: "45 Le Loi St",
+          created_at: "2026-05-22T01:00:00.000Z",
+          updated_at: "2026-05-22T01:00:00.000Z",
+        },
+      ])
+      .mockResolvedValueOnce([
+        {
+          product_id: 7,
+          product_name: "Pho Bo",
+          quantity: 2,
+          price_at_order: "50000.00",
+        },
+      ]);
+
+    const response = await request(app)
+      .get("/api/orders/42")
+      .set("Authorization", `Bearer ${buildToken()}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
+      status: "success",
+      message: "Order fetched successfully",
+      data: {
+        id: 42,
+        user_id: 2,
+        customer_name: "Tran Thi B",
+        total_amount: "100000.00",
+        status: "PENDING",
+        delivery_address: "45 Le Loi St",
+        created_at: "2026-05-22T01:00:00.000Z",
+        updated_at: "2026-05-22T01:00:00.000Z",
+        items: [
+          {
+            product_id: 7,
+            product_name: "Pho Bo",
+            quantity: 2,
+            price_at_order: "50000.00",
+          },
+        ],
+      },
+    });
   });
 });

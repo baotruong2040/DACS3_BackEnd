@@ -128,6 +128,8 @@ All responses use a standard envelope:
           "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
           "category_id": 1,
           "category_name": "Noodle Soups",
+          "average_rating": "4.50",
+          "total_reviews": 12,
           "is_available": true,
           "created_at": "2024-05-15T10:00:00Z"
         }
@@ -159,6 +161,8 @@ All responses use a standard envelope:
       "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
       "category_id": 1,
       "category_name": "Noodle Soups",
+      "average_rating": "4.50",
+      "total_reviews": 12,
       "is_available": true,
       "created_at": "2024-05-15T10:00:00Z"
     }
@@ -195,7 +199,9 @@ All responses use a standard envelope:
           "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
           "is_available": true,
           "category_id": 1,
-          "category_name": "Noodle Soups"
+          "category_name": "Noodle Soups",
+          "average_rating": "4.50",
+          "total_reviews": 12
         }
       ],
       "page": 1,
@@ -326,7 +332,9 @@ All responses use a standard envelope:
           "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
           "is_available": true,
           "category_id": 1,
-          "category_name": "Noodle Soups"
+          "category_name": "Noodle Soups",
+          "average_rating": "4.50",
+          "total_reviews": 12
         }
       ],
       "page": 1,
@@ -434,6 +442,7 @@ All responses use a standard envelope:
         {
           "id": 42,
           "user_id": 1,
+          "customer_name": "Jane Doe",
           "delivery_address": "123 Nguyen Hue St, HCMC",
           "total_amount": 150000,
           "status": "PREPARING",
@@ -472,6 +481,7 @@ All responses use a standard envelope:
         {
           "id": 11,
           "user_id": 2,
+          "customer_name": "Jane Doe",
           "total_amount": 250000,
           "status": "PREPARING",
           "delivery_address": "45 Le Loi St",
@@ -504,7 +514,7 @@ All responses use a standard envelope:
     "data": {
       "id": 42,
       "user_id": 1,
-      "user_name": "Jane Doe",
+      "customer_name": "Jane Doe",
       "delivery_address": "123 Nguyen Hue St, HCMC",
       "total_amount": 150000,
       "status": "PREPARING",
@@ -827,6 +837,133 @@ All responses use a standard envelope:
 | `409` | Conflict | Duplicate username/email |
 | `422` | Unprocessable Entity | Invalid state transition (e.g., order status change) |
 | `500` | Server Error | Unexpected database/server error |
+
+## Favorites
+
+### GET `/api/favorites`
+- **Role:** Authenticated Users (Customer, Staff, Admin)
+- **Description:** Get all favorite products of the current user
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "Favorites fetched successfully",
+    "data": [
+      {
+        "id": 1,
+        "name": "Phở Bò",
+        "description": "Traditional beef pho",
+        "price": 50000,
+        "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
+        "is_available": true,
+        "category_id": 1,
+        "average_rating": "4.50",
+        "total_reviews": 12,
+        "category_name": "Noodle Soups",
+        "favorited_at": "2024-05-15T10:00:00Z"
+      }
+    ]
+  }
+  ```
+
+### POST `/api/favorites`
+- **Role:** Authenticated Users
+- **Description:** Add a product to favorites
+- **Body:**
+  ```json
+  {
+    "product_id": 1
+  }
+  ```
+- **Success:** `201 Created`
+  ```json
+  {
+    "status": "success",
+    "message": "Product added to favorites successfully",
+    "data": null
+  }
+  ```
+- **Errors:** `404` (product not found or unavailable)
+
+### DELETE `/api/favorites/:product_id`
+- **Role:** Authenticated Users
+- **Description:** Remove a product from favorites
+- **Params:** `product_id` (integer, required)
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "Product removed from favorites successfully",
+    "data": null
+  }
+  ```
+- **Errors:** `404` (favorite not found)
+
+## Reviews
+
+### GET `/api/reviews/products/:product_id`
+- **Role:** Public
+- **Description:** Get all reviews for a specific product (paginated)
+- **Params:** `product_id` (integer, required)
+- **Query Parameters:**
+  - `page` (optional): Page number (default: `1`)
+  - `page_size` (optional): Items per page (default: `20`, max: `100`)
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "Reviews fetched successfully",
+    "data": {
+      "reviews": [
+        {
+          "id": 1,
+          "rating": 5,
+          "comment": "Very delicious!",
+          "created_at": "2024-05-15T10:00:00Z",
+          "user_id": 16,
+          "user_full_name": "John Doe"
+        }
+      ],
+      "page": 1,
+      "page_size": 20,
+      "total": 1
+    }
+  }
+  ```
+- **Errors:** `404` (product not found)
+
+### POST `/api/reviews`
+- **Role:** Authenticated Users
+- **Description:** Create a review for a product from a delivered order
+- **Body:**
+  ```json
+  {
+    "product_id": 1,
+    "order_id": 8,
+    "rating": 5,
+    "comment": "Very delicious!"
+  }
+  ```
+- **Validation:**
+  - `rating`: required, integer between 1 and 5
+  - `comment`: optional string
+- **Business Logic:**
+  - The order must belong to the user and have `DELIVERED` status.
+  - The product must have been part of the order.
+  - The user can only review a specific product within an order once.
+- **Success:** `201 Created`
+  ```json
+  {
+    "status": "success",
+    "message": "Review submitted successfully",
+    "data": null
+  }
+  ```
+- **Errors:**
+  - `400` (product not in order)
+  - `403` (order not delivered)
+  - `404` (order not found)
+  - `409` (already reviewed)
 
 ## Rate Limiting & Throttling
 
