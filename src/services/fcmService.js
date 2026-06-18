@@ -12,6 +12,9 @@ function initializeFirebase() {
 
   if (!hasCredentials || admin.apps.length > 0) {
     initialized = hasCredentials && admin.apps.length > 0;
+    if (!hasCredentials) {
+      logger.info("Firebase initialization skipped: missing credentials in .env");
+    }
     return;
   }
 
@@ -24,6 +27,7 @@ function initializeFirebase() {
   });
 
   initialized = true;
+  logger.info("Firebase Admin SDK initialized successfully");
 }
 
 async function sendPush(tokens, title, body, data = {}) {

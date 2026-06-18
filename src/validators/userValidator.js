@@ -26,8 +26,13 @@ const updateUserSchema = z
     message: "At least one field must be provided",
   });
 
+const fcmTokenSchema = z.object({
+  fcm_token: z.string().min(1),
+});
+
 module.exports = {
   userIdParamSchema,
   createStaffSchema,
   updateUserSchema,
+  fcmTokenSchema,
 };

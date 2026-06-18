@@ -1,5 +1,10 @@
 const express = require("express");
-const { createStaff, listStaff, updateUser } = require("../controllers/usersController");
+const {
+  createStaff,
+  listStaff,
+  updateUser,
+  updateFcmToken,
+} = require("../controllers/usersController");
 const { listOrdersByUserId } = require("../controllers/ordersController");
 const { ROLES } = require("../constants/roles");
 const { authenticate } = require("../middleware/authenticate");
@@ -11,6 +16,7 @@ const {
   createStaffSchema,
   updateUserSchema,
   userIdParamSchema,
+  fcmTokenSchema,
 } = require("../validators/userValidator");
 
 const usersRouter = express.Router();
@@ -27,6 +33,12 @@ usersRouter.post(
   authorize(ROLES.ADMIN),
   validate({ body: createStaffSchema }),
   asyncHandler(createStaff)
+);
+usersRouter.patch(
+  "/users/fcm-token",
+  authenticate,
+  validate({ body: fcmTokenSchema }),
+  asyncHandler(updateFcmToken)
 );
 usersRouter.put(
   "/users/:id",

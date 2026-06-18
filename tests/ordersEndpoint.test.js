@@ -238,6 +238,7 @@ describe("GET /api/orders", () => {
           product_name: "Pho Bo",
           quantity: 2,
           price_at_order: "50000.00",
+          image_url: "https://example.com/pho-bo.jpg",
         },
       ]);
 
@@ -263,7 +264,9 @@ describe("GET /api/orders", () => {
             product_id: 7,
             product_name: "Pho Bo",
             quantity: 2,
-            price_at_order: "50000.00",
+            price_at_order: 50000,
+            subtotal: 100000,
+            image_url: "https://example.com/pho-bo.jpg",
           },
         ],
       },

@@ -51,7 +51,7 @@ Chứa router theo domain.
 - `catalogRoutes.js`: sản phẩm, danh mục
 - `ordersRoutes.js`: đơn hàng
 - `notificationsRoutes.js`: thông báo
-- `usersRoutes.js`: quản lý staff/user
+- `usersRoutes.js`: quản lý staff/user và FCM token
 - `reportsRoutes.js`: báo cáo
 
 ### `src/controllers/`

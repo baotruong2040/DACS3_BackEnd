@@ -1,4 +1,5 @@
 const { ROLES } = require("../constants/roles");
+const { fireAndForgetPush } = require("./fcmService");
 
 async function createNotification(executor, userId, title, message) {
   const result = await runExecute(
@@ -10,6 +11,19 @@ async function createNotification(executor, userId, title, message) {
     [userId, title, message]
   );
   return result.insertId;
+}
+
+async function getUserTokensByRole(executor, role) {
+  const rows = await runExecute(
+    executor,
+    `
+      SELECT fcm_token
+      FROM users
+      WHERE role = ? AND fcm_token IS NOT NULL
+    `,
+    [role]
+  );
+  return rows.map((row) => row.fcm_token);
 }
 
 async function getUserIdsByRole(executor, role) {
@@ -39,9 +53,14 @@ async function notifyStaffNewOrder(executor, orderId) {
   const message = `Order #${orderId} has been placed and is pending.`;
 
   for (const userId of staffIds) {
-    // Explicit sequential writes keep error handling deterministic.
-    // Notification count is expected to be small for staff role.
     await createNotification(executor, userId, title, message);
+  }
+
+  const staffTokens = await getUserTokensByRole(executor, ROLES.STAFF);
+  if (staffTokens.length > 0) {
+    fireAndForgetPush(staffTokens, title, message, {
+      order_id: String(orderId),
+    });
   }
 }
 

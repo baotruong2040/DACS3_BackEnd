@@ -545,7 +545,7 @@ All responses use a standard envelope:
 
 ### PUT `/api/orders/:id/status`
 - **Role:** `STAFF` or `ADMIN`
-- **Description:** Update order status (enforces valid state transitions)
+- **Description:** Update order status (enforces valid state transitions). Also sends a push notification to the customer if they have an FCM token saved.
 - **Params:** `id` (integer, required)
 - **Body:**
   ```json
@@ -643,6 +643,26 @@ All responses use a standard envelope:
 - **Errors:**
   - `401`: Missing/invalid JWT
   - `404`: Notification not found
+
+## Users
+
+### PATCH `/api/users/fcm-token`
+- **Role:** Authenticated
+- **Description:** Update the current user's FCM token for push notifications.
+- **Body:**
+  ```json
+  {
+    "fcm_token": "your-fcm-device-token"
+  }
+  ```
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "FCM token updated successfully",
+    "data": null
+  }
+  ```
 
 ## Users (Admin)
 

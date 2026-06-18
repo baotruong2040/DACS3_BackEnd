@@ -72,8 +72,18 @@ async function updateUser(req, res) {
   });
 }
 
+async function updateFcmToken(req, res) {
+  const userId = req.user.id;
+  const { fcm_token } = req.body;
+
+  await executeQuery("UPDATE users SET fcm_token = ? WHERE id = ?", [fcm_token, userId]);
+
+  return successResponse(res, "FCM token updated successfully");
+}
+
 module.exports = {
   listStaff,
   createStaff,
   updateUser,
+  updateFcmToken,
 };

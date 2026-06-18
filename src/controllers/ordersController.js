@@ -75,10 +75,18 @@ async function createOrder(req, res) {
     return createdOrderId;
   });
 
-  fireAndForgetPush([], "New order", `Order #${orderId} is waiting for processing`, {
-    order_id: String(orderId),
-    status: ORDER_STATUS.PENDING,
-  });
+  const [userRows] = await executeQuery("SELECT fcm_token FROM users WHERE id = ?", [userId]);
+  if (userRows && userRows.fcm_token) {
+    fireAndForgetPush(
+      [userRows.fcm_token],
+      "Order placed successfully",
+      `Your order #${orderId} has been placed and is waiting for processing`,
+      {
+        order_id: String(orderId),
+        status: ORDER_STATUS.PENDING,
+      }
+    );
+  }
 
   return successResponse(
     res,
@@ -197,7 +205,8 @@ async function getOrderById(req, res) {
         od.product_id,
         p.name AS product_name,
         od.quantity,
-        od.price_at_order
+        od.price_at_order,
+        p.image_url
       FROM order_details od
       INNER JOIN products p ON p.id = od.product_id
       WHERE od.order_id = ?
@@ -206,9 +215,15 @@ async function getOrderById(req, res) {
     [orderId]
   );
 
+  const items = details.map((item) => ({
+    ...item,
+    price_at_order: Number(item.price_at_order),
+    subtotal: Number(item.quantity) * Number(item.price_at_order),
+  }));
+
   return successResponse(res, "Order fetched successfully", {
     ...order,
-    items: details,
+    items,
   });
 }
 
@@ -218,9 +233,10 @@ async function updateOrderStatus(req, res) {
 
   const rows = await executeQuery(
     `
-      SELECT id, user_id, status
-      FROM orders
-      WHERE id = ?
+      SELECT o.id, o.user_id, o.status, u.fcm_token
+      FROM orders o
+      JOIN users u ON o.user_id = u.id
+      WHERE o.id = ?
       LIMIT 1
     `,
     [orderId]
@@ -253,10 +269,17 @@ async function updateOrderStatus(req, res) {
     `Order #${orderId} is now ${nextStatus}.`
   );
 
-  fireAndForgetPush([], "Order status updated", `Order #${orderId} is now ${nextStatus}`, {
-    order_id: String(orderId),
-    status: nextStatus,
-  });
+  if (order.fcm_token) {
+    fireAndForgetPush(
+      [order.fcm_token],
+      "Order status updated",
+      `Order #${orderId} is now ${nextStatus}`,
+      {
+        order_id: String(orderId),
+        status: nextStatus,
+      }
+    );
+  }
 
   return successResponse(res, "Order status updated successfully", {
     order_id: Number(orderId),
