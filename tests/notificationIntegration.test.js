@@ -45,7 +45,7 @@ describe("FCM Notification Integration", () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("FCM token updated successfully");
     expect(executeQuery).toHaveBeenCalledWith(
-      "UPDATE users SET fcm_token = ? WHERE id = ?",
+      "UPDATE users SET fcm_token = ? WHERE id = ? AND is_deleted = 0",
       ["test-token-123", 10]
     );
   });

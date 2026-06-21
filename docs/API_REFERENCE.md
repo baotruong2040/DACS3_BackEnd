@@ -7,6 +7,7 @@
 - **Format:** JSON (except file uploads, which use `multipart/form-data`)
 - **Database:** MySQL
 - **Framework:** Express.js + Node.js
+- **Health Check:** `GET http://localhost:3000/health` (Public, bypasses `/api` routing prefix)
 
 ## Response Envelope
 
@@ -108,38 +109,30 @@ All responses use a standard envelope:
 
 ### GET `/api/products`
 - **Role:** Public
-- **Description:** List all available products with category info
+- **Description:** List products with category info. By default, only returns available products.
 - **Query Parameters:**
-  - `category_id` (optional): Filter by category (integer)
-  - `page` (optional): Page number for pagination (default: 1)
-  - `page_size` (optional): Items per page (default: 10, max: 100)
+  - `all` (optional): Set to `true` to include unavailable products (default: `false`)
+  - `include_unavailable` (optional): Equivalent to `all=true` (default: `false`)
 - **Success:** `200 OK`
   ```json
   {
     "status": "success",
-    "message": "Products retrieved successfully",
-    "data": {
-      "products": [
-        {
-          "id": 1,
-          "name": "Phở Bò",
-          "description": "Traditional beef pho",
-          "price": 50000,
-          "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
-          "category_id": 1,
-          "category_name": "Noodle Soups",
-          "average_rating": "4.50",
-          "total_reviews": 12,
-          "is_available": true,
-          "created_at": "2024-05-15T10:00:00Z"
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "page_size": 10,
-        "total": 25
+    "message": "Products fetched successfully",
+    "data": [
+      {
+        "id": 1,
+        "name": "Phở Bò",
+        "description": "Traditional beef pho",
+        "price": 50000,
+        "image_url": "https://api.example.com/uploads/products/1715794425000-123456789.jpg",
+        "is_available": true,
+        "category_id": 1,
+        "category_name": "Noodle Soups",
+        "average_rating": "4.50",
+        "total_reviews": 12,
+        "created_at": "2024-05-15T10:00:00Z"
       }
-    }
+    ]
   }
   ```
 - **Errors:** `400` (invalid parameters)
@@ -388,6 +381,7 @@ All responses use a standard envelope:
   ```json
   {
     "delivery_address": "123 Nguyen Hue St, HCMC",
+    "customer_phone": "0912345678",
     "items": [
       { "product_id": 1, "quantity": 2 },
       { "product_id": 3, "quantity": 1 }
@@ -395,7 +389,8 @@ All responses use a standard envelope:
   }
   ```
 - **Validation:**
-  - `delivery_address`: required, non-empty string
+  - `delivery_address`: required, string (min 5, max 1000 characters)
+  - `customer_phone`: optional, string (min 8, max 15)
   - `items`: required, array with at least 1 item
   - Each item must have `product_id` (exists in DB) and `quantity` (positive integer)
 - **Server-Side Business Logic:**
@@ -425,36 +420,35 @@ All responses use a standard envelope:
   - `404`: Product not found
   - `500`: Database error (partial rollback)
 
-### GET `/api/orders?status=all&page=1&page_size=50`
+### GET `/api/orders`
 - **Role:** `STAFF` or `ADMIN`
 - **Description:** List all orders (staff/admin only)
 - **Query Parameters:**
-  - `status` (optional): Filter by status (PENDING, PREPARING, READY, DELIVERING, DELIVERED, CANCELLED)
+  - `status` (optional): Filter by status (PENDING, PREPARING, READY, DELIVERING, DELIVERED, CANCELLED). Case-insensitive. Setting to `ALL` or omitting retrieves all orders.
   - `page` (optional): Page number (default: 1)
-  - `page_size` (optional): Items per page (default: 10, max: 100)
+  - `page_size` (optional): Items per page (default: 20, max: 100)
 - **Success:** `200 OK`
   ```json
   {
     "status": "success",
-    "message": "Orders retrieved successfully",
+    "message": "Orders fetched successfully",
     "data": {
-      "orders": [
+      "items": [
         {
           "id": 42,
           "user_id": 1,
           "customer_name": "Jane Doe",
           "delivery_address": "123 Nguyen Hue St, HCMC",
+          "customer_phone": "0912345678",
           "total_amount": 150000,
           "status": "PREPARING",
           "created_at": "2024-05-15T14:30:00Z",
-          "item_count": 3
+          "updated_at": "2024-05-15T14:35:00Z"
         }
       ],
-      "pagination": {
-        "page": 1,
-        "page_size": 10,
-        "total": 25
-      }
+      "page": 1,
+      "page_size": 20,
+      "total": 25
     }
   }
   ```
@@ -485,6 +479,7 @@ All responses use a standard envelope:
           "total_amount": 250000,
           "status": "PREPARING",
           "delivery_address": "45 Le Loi St",
+          "customer_phone": "0912345678",
           "created_at": "2024-05-15T14:30:00Z",
           "updated_at": "2024-05-15T14:30:00Z"
         }
@@ -516,6 +511,7 @@ All responses use a standard envelope:
       "user_id": 1,
       "customer_name": "Jane Doe",
       "delivery_address": "123 Nguyen Hue St, HCMC",
+      "customer_phone": "0912345678",
       "total_amount": 150000,
       "status": "PREPARING",
       "created_at": "2024-05-15T14:30:00Z",
@@ -591,35 +587,21 @@ All responses use a standard envelope:
 
 ### GET `/api/notifications`
 - **Role:** Authenticated (any user)
-- **Description:** Get current user's notifications
-- **Query Parameters:**
-  - `page` (optional): Page number (default: 1)
-  - `page_size` (optional): Items per page (default: 10, max: 50)
-  - `unread_only` (optional): Filter only unread (true/false)
+- **Description:** Get current user's notifications (flat list sorted by creation date descending, no pagination query parameters supported)
 - **Success:** `200 OK`
   ```json
   {
     "status": "success",
-    "message": "Notifications retrieved successfully",
-    "data": {
-      "notifications": [
-        {
-          "id": 1,
-          "user_id": 1,
-          "title": "Order Accepted",
-          "message": "Your order #42 has been accepted by the restaurant",
-          "is_read": false,
-          "order_id": 42,
-          "created_at": "2024-05-15T14:35:00Z"
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "page_size": 10,
-        "total": 5,
-        "unread_count": 2
+    "message": "Notifications fetched successfully",
+    "data": [
+      {
+        "id": 1,
+        "title": "Order status updated",
+        "message": "Order #42 is now PREPARING.",
+        "is_read": false,
+        "created_at": "2024-05-15T14:35:00Z"
       }
-    }
+    ]
   }
   ```
 - **Errors:** `401` (missing/invalid JWT)
@@ -664,38 +646,75 @@ All responses use a standard envelope:
   }
   ```
 
-## Users (Admin)
-
-### GET `/api/users`
-- **Role:** `ADMIN`
-- **Description:** List all staff accounts (no customers here; use staff filter)
-- **Query Parameters:**
-  - `role` (optional): Filter by role (STAFF, ADMIN)
-  - `page` (optional): Page number (default: 1)
-  - `page_size` (optional): Items per page (default: 10, max: 50)
+### GET `/api/users/me`
+- **Role:** Authenticated
+- **Description:** Get current logged-in user profile details
 - **Success:** `200 OK`
   ```json
   {
     "status": "success",
-    "message": "Users retrieved successfully",
+    "message": "User profile fetched successfully",
     "data": {
-      "users": [
-        {
-          "id": 2,
-          "username": "staff_member",
-          "full_name": "Jane Smith",
-          "email": "jane@example.com",
-          "phone": "0987654321",
-          "role": "STAFF",
-          "created_at": "2024-05-10T10:00:00Z"
-        }
-      ],
-      "pagination": {
-        "page": 1,
-        "page_size": 10,
-        "total": 5
-      }
+      "id": 16,
+      "username": "riyaki",
+      "full_name": "Huỳnh Ngọc Bảo Trường",
+      "email": "truongyasuo@gmail.com",
+      "phone": "0819033106",
+      "address": "11 leloi",
+      "role": "CUSTOMER",
+      "created_at": "2026-05-15T11:13:19.000Z"
     }
+  }
+  ```
+- **Errors:**
+  - `401`: Missing/invalid JWT token
+  - `404`: User not found
+
+### PUT `/api/users/me`
+- **Role:** Authenticated
+- **Description:** Update current user's profile information
+- **Body:** At least one of:
+  - `full_name`: new full name (string, min 1, max 100)
+  - `email`: new email (string, valid email format, max 100, must be unique)
+  - `phone`: new phone (string, min 8, max 15)
+  - `address`: new address (string, max 500, nullable)
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "Profile updated successfully",
+    "data": {
+      "user_id": 16
+    }
+  }
+  ```
+- **Errors:**
+  - `400`: No fields to update (empty payload) or validation fails
+  - `401`: Missing/invalid JWT token
+  - `409`: Email already exists
+
+## Users (Admin)
+
+### GET `/api/users`
+- **Role:** `ADMIN`
+- **Description:** List all active users (returns all users where `is_deleted = 0` sorted by ID descending, no pagination query parameters supported)
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "Staff users fetched successfully",
+    "data": [
+      {
+        "id": 2,
+        "username": "staff_member",
+        "full_name": "Jane Smith",
+        "email": "jane@example.com",
+        "phone": "0987654321",
+        "address": "456 Tran Hung Dao St, HCMC",
+        "role": "STAFF",
+        "created_at": "2024-05-10T10:00:00Z"
+      }
+    ]
   }
   ```
 - **Errors:**
@@ -704,7 +723,7 @@ All responses use a standard envelope:
 
 ### POST `/api/users/staff`
 - **Role:** `ADMIN`
-- **Description:** Create a new staff member account
+- **Description:** Create a new staff or user account
 - **Body:**
   ```json
   {
@@ -713,21 +732,22 @@ All responses use a standard envelope:
     "full_name": "Jane Smith",
     "email": "jane@example.com",
     "phone": "0987654321",
-    "address": "456 Tran Hung Dao St, HCMC (optional)"
+    "address": "456 Tran Hung Dao St, HCMC (optional)",
+    "role": "STAFF (optional, can be CUSTOMER, STAFF, or ADMIN; defaults to STAFF)"
   }
   ```
 - **Validation:**
-  - `username`: required, unique, alphanumeric
-  - `password`: required, min 8 characters, bcrypt hashed
-  - `email`: required, unique, valid format
-  - `phone`: required
-  - Default role: `STAFF` (cannot be changed via this endpoint)
+  - `username`: required, unique, alphanumeric, min 3 max 50 characters
+  - `password`: required, min 8 max 72 characters, bcrypt hashed
+  - `email`: required, unique, valid format, max 100 characters
+  - `phone`: required, min 8 max 15 characters
+  - `address`: optional, max 500 characters
 - **Success:** `201 Created`
   ```json
   {
     "status": "success",
-    "message": "Staff created successfully",
-    "data": { "user_id": 3 }
+    "message": "Staff account created successfully",
+    "data": { "user_id": 3, "role": "STAFF" }
   }
   ```
 - **Errors:**
@@ -741,11 +761,11 @@ All responses use a standard envelope:
 - **Description:** Update user information
 - **Params:** `id` (integer, required)
 - **Body:** At least one of:
-  - `full_name`: new full name
-  - `email`: new email (must be unique)
-  - `phone`: new phone
-  - `address`: new address
-  - `role`: STAFF or ADMIN (role change)
+  - `full_name`: new full name (string, min 1, max 100)
+  - `email`: new email (string, email format, max 100, must be unique)
+  - `phone`: new phone (string, min 8, max 15)
+  - `address`: new address (string, max 500, nullable)
+  - `role`: STAFF, ADMIN, or CUSTOMER (role change)
 - **Success:** `200 OK`
   ```json
   {
@@ -760,11 +780,28 @@ All responses use a standard envelope:
   - `403`: User is not ADMIN
   - `404`: User not found
 
+### DELETE `/api/users/:id`
+- **Role:** `ADMIN`
+- **Description:** Soft delete a user account (staff or customer). The operation marks the user as deleted and appends `_deleted_<timestamp>` to their username and email.
+- **Params:** `id` (integer, required)
+- **Success:** `200 OK`
+  ```json
+  {
+    "status": "success",
+    "message": "User soft deleted successfully",
+    "data": { "user_id": 3 }
+  }
+  ```
+- **Errors:**
+  - `401`: Missing/invalid JWT
+  - `403`: User is not ADMIN
+  - `404`: User not found
+
 ## Reporting (Admin)
 
 ### GET `/api/reports/revenue`
 - **Role:** `ADMIN`
-- **Description:** Revenue analytics grouped by time period
+- **Description:** Revenue analytics grouped by time period (excluding CANCELLED orders)
 - **Query Parameters:**
   - `period` (required): daily | weekly | monthly
   - `from` (required): Start date (YYYY-MM-DD format)
@@ -774,30 +811,23 @@ All responses use a standard envelope:
   ```json
   {
     "status": "success",
-    "message": "Revenue report generated",
+    "message": "Revenue report fetched successfully",
     "data": {
       "period": "daily",
       "from": "2024-05-01",
       "to": "2024-05-31",
-      "buckets": [
+      "items": [
         {
-          "date": "2024-05-15",
-          "total_revenue": 3500000,
-          "order_count": 25,
-          "avg_order_value": 140000
+          "bucket": "2024-05-15",
+          "revenue": 3500000,
+          "order_count": 25
         },
         {
-          "date": "2024-05-16",
-          "total_revenue": 4200000,
-          "order_count": 30,
-          "avg_order_value": 140000
+          "bucket": "2024-05-16",
+          "revenue": 4200000,
+          "order_count": 30
         }
-      ],
-      "summary": {
-        "total_revenue": 125000000,
-        "total_orders": 890,
-        "avg_revenue": 3500000
-      }
+      ]
     }
   }
   ```
@@ -808,7 +838,7 @@ All responses use a standard envelope:
 
 ### GET `/api/reports/top-products`
 - **Role:** `ADMIN`
-- **Description:** Best-selling products in a date range
+- **Description:** Best-selling products in a date range (excluding CANCELLED orders)
 - **Query Parameters:**
   - `from` (required): Start date (YYYY-MM-DD format)
   - `to` (required): End date (YYYY-MM-DD format)
@@ -818,24 +848,23 @@ All responses use a standard envelope:
   ```json
   {
     "status": "success",
-    "message": "Top products report generated",
+    "message": "Top products report fetched successfully",
     "data": {
       "from": "2024-05-01",
       "to": "2024-05-31",
-      "products": [
+      "limit": 5,
+      "items": [
         {
           "product_id": 1,
           "product_name": "Phở Bò",
-          "total_quantity_sold": 245,
-          "total_revenue": 12250000,
-          "avg_price": 50000
+          "total_quantity": 245,
+          "total_revenue": 12250000
         },
         {
           "product_id": 3,
           "product_name": "Cơm Tấm",
-          "total_quantity_sold": 180,
-          "total_revenue": 9000000,
-          "avg_price": 50000
+          "total_quantity": 180,
+          "total_revenue": 9000000
         }
       ]
     }

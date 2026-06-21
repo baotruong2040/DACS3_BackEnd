@@ -15,7 +15,7 @@ async function register(req, res) {
     `
       SELECT id
       FROM users
-      WHERE username = ? OR email = ?
+      WHERE (username = ? OR email = ?) AND is_deleted = 0
       LIMIT 1
     `,
     [username, email]
@@ -53,7 +53,7 @@ async function login(req, res) {
     `
       SELECT id, password, role
       FROM users
-      WHERE username = ?
+      WHERE username = ? AND is_deleted = 0
       LIMIT 1
     `,
     [username]

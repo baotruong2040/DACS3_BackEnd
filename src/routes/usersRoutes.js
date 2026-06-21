@@ -4,6 +4,9 @@ const {
   listStaff,
   updateUser,
   updateFcmToken,
+  getMe,
+  updateMe,
+  deleteUser,
 } = require("../controllers/usersController");
 const { listOrdersByUserId } = require("../controllers/ordersController");
 const { ROLES } = require("../constants/roles");
@@ -16,6 +19,7 @@ const {
   createStaffSchema,
   updateUserSchema,
   userIdParamSchema,
+  updateMeSchema,
   fcmTokenSchema,
 } = require("../validators/userValidator");
 
@@ -34,6 +38,17 @@ usersRouter.post(
   validate({ body: createStaffSchema }),
   asyncHandler(createStaff)
 );
+usersRouter.get(
+  "/users/me",
+  authenticate,
+  asyncHandler(getMe)
+);
+usersRouter.put(
+  "/users/me",
+  authenticate,
+  validate({ body: updateMeSchema }),
+  asyncHandler(updateMe)
+);
 usersRouter.patch(
   "/users/fcm-token",
   authenticate,
@@ -46,6 +61,13 @@ usersRouter.put(
   authorize(ROLES.ADMIN),
   validate({ params: userIdParamSchema, body: updateUserSchema }),
   asyncHandler(updateUser)
+);
+usersRouter.delete(
+  "/users/:id",
+  authenticate,
+  authorize(ROLES.ADMIN),
+  validate({ params: userIdParamSchema }),
+  asyncHandler(deleteUser)
 );
 usersRouter.get(
   "/users/:id/orders",

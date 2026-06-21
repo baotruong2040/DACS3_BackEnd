@@ -273,3 +273,130 @@ describe("GET /api/orders", () => {
     });
   });
 });
+
+describe("POST /api/orders", () => {
+  const app = express();
+  app.use(express.json());
+  app.use("/api", ordersRouter);
+  app.use(errorHandler);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test("creates an order successfully with customer_phone", async () => {
+    const { withTransaction } = require("../src/db/query");
+    
+    // Mock products query
+    executeQuery.mockResolvedValueOnce([
+      { id: 10, price: 50000, is_available: 1 }
+    ]);
+    
+    // Mock user query for FCM token
+    executeQuery.mockResolvedValueOnce([
+      { fcm_token: "user-fcm-token" }
+    ]);
+    
+    // Mock transaction behavior
+    const mockConnection = {
+      execute: jest.fn()
+        .mockResolvedValueOnce([{ insertId: 123 }, []]) // INSERT INTO orders
+        .mockResolvedValueOnce([{ insertId: 456 }, []]) // INSERT INTO order_details
+        .mockResolvedValueOnce([[], []])                // SELECT id FROM users WHERE role = 'STAFF'
+        .mockResolvedValueOnce([[], []])                // SELECT fcm_token FROM users WHERE role = 'STAFF' ...
+    };
+    
+    withTransaction.mockImplementationOnce(async (workFn) => {
+      return workFn(mockConnection);
+    });
+
+    const response = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${buildToken(ROLES.CUSTOMER)}`)
+      .send({
+        delivery_address: "123 Nguyen Hue St",
+        customer_phone: "0912345678",
+        items: [
+          { product_id: 10, quantity: 2 }
+        ]
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body).toEqual({
+      status: "success",
+      message: "Order created successfully",
+      data: {
+        order_id: 123,
+        total_amount: 100000,
+        status: "PENDING"
+      }
+    });
+    
+    expect(mockConnection.execute).toHaveBeenNthCalledWith(1, expect.stringContaining("INSERT INTO orders"), [
+      99, // user_id from buildToken helper
+      100000, // totalAmount
+      "PENDING",
+      "123 Nguyen Hue St",
+      "0912345678"
+    ]);
+  });
+
+  test("creates an order successfully without customer_phone", async () => {
+    const { withTransaction } = require("../src/db/query");
+    
+    executeQuery.mockResolvedValueOnce([
+      { id: 10, price: 50000, is_available: 1 }
+    ]);
+    executeQuery.mockResolvedValueOnce([
+      { fcm_token: "user-fcm-token" }
+    ]);
+    
+    const mockConnection = {
+      execute: jest.fn()
+        .mockResolvedValueOnce([{ insertId: 124 }, []])
+        .mockResolvedValueOnce([{ insertId: 457 }, []])
+        .mockResolvedValueOnce([[], []])
+        .mockResolvedValueOnce([[], []])
+    };
+    
+    withTransaction.mockImplementationOnce(async (workFn) => {
+      return workFn(mockConnection);
+    });
+
+    const response = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${buildToken(ROLES.CUSTOMER)}`)
+      .send({
+        delivery_address: "123 Nguyen Hue St",
+        items: [
+          { product_id: 10, quantity: 2 }
+        ]
+      });
+
+    expect(response.status).toBe(201);
+    expect(mockConnection.execute).toHaveBeenNthCalledWith(1, expect.stringContaining("INSERT INTO orders"), [
+      99,
+      100000,
+      "PENDING",
+      "123 Nguyen Hue St",
+      null
+    ]);
+  });
+
+  test("returns 400 validation error if customer_phone is invalid (too short)", async () => {
+    const response = await request(app)
+      .post("/api/orders")
+      .set("Authorization", `Bearer ${buildToken(ROLES.CUSTOMER)}`)
+      .send({
+        delivery_address: "123 Nguyen Hue St",
+        customer_phone: "12345", // too short (min 8)
+        items: [
+          { product_id: 10, quantity: 2 }
+        ]
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Validation failed");
+  });
+});
+

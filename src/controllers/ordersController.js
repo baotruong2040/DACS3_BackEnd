@@ -18,7 +18,7 @@ function normalizeItems(items) {
 
 async function createOrder(req, res) {
   const userId = req.user.id;
-  const { delivery_address, items } = req.body;
+  const { delivery_address, customer_phone = null, items } = req.body;
   const normalizedItems = normalizeItems(items);
   const productIds = normalizedItems.map((item) => item.product_id);
   const placeholders = productIds.map(() => "?").join(",");
@@ -52,10 +52,10 @@ async function createOrder(req, res) {
   const orderId = await withTransaction(async (connection) => {
     const [orderResult] = await connection.execute(
       `
-        INSERT INTO orders (user_id, total_amount, status, delivery_address)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO orders (user_id, total_amount, status, delivery_address, customer_phone)
+        VALUES (?, ?, ?, ?, ?)
       `,
-      [userId, totalAmount, ORDER_STATUS.PENDING, delivery_address]
+      [userId, totalAmount, ORDER_STATUS.PENDING, delivery_address, customer_phone]
     );
 
     const createdOrderId = orderResult.insertId;
@@ -141,6 +141,7 @@ async function listOrdersByFilter(req, res, userId = null) {
         o.total_amount,
         o.status,
         o.delivery_address,
+        o.customer_phone,
         o.created_at,
         o.updated_at
       FROM orders o
@@ -180,6 +181,7 @@ async function getOrderById(req, res) {
         o.total_amount,
         o.status,
         o.delivery_address,
+        o.customer_phone,
         o.created_at,
         o.updated_at
       FROM orders o

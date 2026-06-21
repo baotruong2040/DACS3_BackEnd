@@ -3,7 +3,10 @@ const { AppError } = require("../utils/appError");
 const { buildPublicUrl } = require("../utils/publicUrl");
 const { successResponse } = require("../utils/response");
 
-async function listProducts(_req, res) {
+async function listProducts(req, res) {
+  const includeAll = req.query.all === "true" || req.query.include_unavailable === "true";
+  const whereClause = includeAll ? "" : "WHERE p.is_available = TRUE";
+
   const rows = await executeQuery(
     `
       SELECT
@@ -19,7 +22,7 @@ async function listProducts(_req, res) {
         c.name AS category_name
       FROM products p
       INNER JOIN categories c ON c.id = p.category_id
-      WHERE p.is_available = TRUE
+      ${whereClause}
       ORDER BY p.id DESC
     `
   );

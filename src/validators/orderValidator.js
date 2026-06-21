@@ -7,6 +7,7 @@ const orderIdParamSchema = z.object({
 
 const createOrderSchema = z.object({
   delivery_address: z.string().min(5).max(1000),
+  customer_phone: z.string().min(8).max(15).optional().nullable(),
   items: z
     .array(
       z.object({

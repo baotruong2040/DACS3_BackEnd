@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Máy chủ: 127.0.0.1
--- Thời gian đã tạo: Th6 14, 2026 lúc 08:24 PM
+-- Thời gian đã tạo: Th6 21, 2026 lúc 02:36 PM
 -- Phiên bản máy phục vụ: 10.4.32-MariaDB
 -- Phiên bản PHP: 8.2.12
 
@@ -81,7 +81,12 @@ INSERT INTO `notifications` (`id`, `user_id`, `title`, `message`, `is_read`, `cr
 (6, 16, 'Order status updated', 'Order #8 is now PREPARING.', 0, '2026-05-24 07:55:00'),
 (7, 16, 'Order status updated', 'Order #8 is now READY.', 0, '2026-05-24 07:55:09'),
 (8, 16, 'Order status updated', 'Order #8 is now DELIVERING.', 0, '2026-05-24 07:55:11'),
-(9, 16, 'Order status updated', 'Order #8 is now DELIVERED.', 0, '2026-05-24 07:55:14');
+(9, 16, 'Order status updated', 'Order #8 is now DELIVERED.', 0, '2026-05-24 07:55:14'),
+(10, 16, 'Order status updated', 'Order #9 is now PREPARING.', 0, '2026-06-18 08:13:27'),
+(11, 16, 'Order status updated', 'Order #9 is now READY.', 0, '2026-06-18 08:13:58'),
+(12, 16, 'Order status updated', 'Order #9 is now DELIVERING.', 0, '2026-06-18 08:22:39'),
+(13, 16, 'Order status updated', 'Order #9 is now DELIVERED.', 0, '2026-06-18 08:23:05'),
+(14, 16, 'Order status updated', 'Order #10 is now PREPARING.', 0, '2026-06-19 07:55:20');
 
 -- --------------------------------------------------------
 
@@ -105,7 +110,9 @@ CREATE TABLE `orders` (
 --
 
 INSERT INTO `orders` (`id`, `user_id`, `total_amount`, `status`, `delivery_address`, `note`, `created_at`, `updated_at`) VALUES
-(8, 16, 110000.00, 'DELIVERED', 'vipawdaw', NULL, '2026-05-22 08:51:43', '2026-05-24 07:55:14');
+(8, 16, 110000.00, 'DELIVERED', 'vipawdaw', NULL, '2026-05-22 08:51:43', '2026-05-24 07:55:14'),
+(9, 16, 90000.00, 'DELIVERED', '& \"$env:LOCALAPPDATA\\Android\\Sdk\\platform-tools\\adb.exe\" reverse tcp:3000 tcp:3000', NULL, '2026-06-16 12:09:28', '2026-06-18 08:23:05'),
+(10, 16, 135000.00, 'PREPARING', 'danang', NULL, '2026-06-19 07:54:44', '2026-06-19 07:55:20');
 
 -- --------------------------------------------------------
 
@@ -126,7 +133,11 @@ CREATE TABLE `order_details` (
 --
 
 INSERT INTO `order_details` (`id`, `order_id`, `product_id`, `quantity`, `price_at_order`) VALUES
-(11, 8, 26, 2, 55000.00);
+(11, 8, 26, 2, 55000.00),
+(12, 9, 24, 1, 45000.00),
+(13, 9, 27, 1, 45000.00),
+(14, 10, 24, 2, 45000.00),
+(15, 10, 27, 1, 45000.00);
 
 -- --------------------------------------------------------
 
@@ -158,8 +169,8 @@ INSERT INTO `products` (`id`, `category_id`, `name`, `description`, `price`, `im
 (25, 4, 'Gà rán giòn', 'Gà chiên giòn không xương', 40000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-05-22 19:35:42', 0.00, 0),
 (26, 3, 'Burger Bò Phô Mai', 'Burger bò Úc nướng lửa hồng, phô mai Cheddar', 55000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-05-22 19:35:45', 0.00, 0),
 (27, 3, 'Burger Gà Cay', 'Burger nhân gà chiên giòn xốt cay nồng', 45000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-05-22 19:35:49', 0.00, 0),
-(28, 6, 'Combo R&T Tiết Kiệm', '1 Burger bò + 1 Gà rán giòn + 1 Nước ngọt', 99000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-05-22 19:35:51', 0.00, 0),
-(29, 6, 'Combo Gia Đình', '3 Gà rán mắm tỏi + 3 Burger Gà Cay + 3 Nước ngọt', 250000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-05-22 19:35:47', 0.00, 0);
+(28, 6, 'Combo R&T Tiết Kiệm', '1 Burger bò + 1 Gà rán giòn + 1 Nước ngọt', 99000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-06-21 12:26:59', 0.00, 0),
+(29, 6, 'Combo Gia Đình', '3 Gà rán mắm tỏi + 3 Burger Gà Cay + 3 Nước ngọt', 250000.00, 'https://upload.wikimedia.org/wikipedia/vi/9/92/KFC_logo-image.png', 1, '2026-05-22 07:35:22', '2026-06-21 12:26:59', 0.00, 0);
 
 -- --------------------------------------------------------
 
@@ -192,6 +203,7 @@ CREATE TABLE `users` (
   `phone` varchar(15) NOT NULL,
   `address` text DEFAULT NULL,
   `role` enum('CUSTOMER','STAFF','ADMIN') DEFAULT 'CUSTOMER',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `fcm_token` text DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
@@ -201,10 +213,10 @@ CREATE TABLE `users` (
 -- Đang đổ dữ liệu cho bảng `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `email`, `phone`, `address`, `role`, `fcm_token`, `created_at`, `updated_at`) VALUES
-(1, 'admin_rt', 'hashed_password_here', 'System Admin', NULL, '0901234567', NULL, 'ADMIN', NULL, '2026-04-18 14:39:13', '2026-04-18 14:39:13'),
-(13, 'admin', '$2b$10$.7uFWdyFIIM.sn5r/a9wg.MeAj8sjMFU/0I35WSw4iWlv1L/HdsJe', 'System Admin', 'admin@example.com', '0123456789', 'Head Office', 'ADMIN', NULL, '2026-04-18 15:20:58', '2026-04-18 15:20:58'),
-(16, 'riyaki', '$2b$10$N1dYpgjQflbj5vX4YFHEI.7rOv6HlO6ZMnR3R0iR.wJxub9J2DWKS', 'Huỳnh Ngọc Bảo Trường', 'truongyasuo@gmail.com', '0819033106', '11 leloi', 'CUSTOMER', NULL, '2026-05-15 11:13:19', '2026-05-15 11:13:19');
+INSERT INTO `users` (`id`, `username`, `password`, `full_name`, `email`, `phone`, `address`, `role`, `is_active`, `fcm_token`, `created_at`, `updated_at`) VALUES
+(1, 'admin_rt', 'hashed_password_here', 'System Admin', NULL, '0901234567', NULL, 'ADMIN', 1, NULL, '2026-04-18 14:39:13', '2026-04-18 14:39:13'),
+(13, 'admin', '$2b$10$.7uFWdyFIIM.sn5r/a9wg.MeAj8sjMFU/0I35WSw4iWlv1L/HdsJe', 'át min', 'admin@example.com', '0123456789', 'Head Office', 'ADMIN', 1, 'eGeJAQY7QyKnqnGNGvmz9-:APA91bGApSCCX9mvmih_SF7AOnrCqpTmFrVzQTuIblH-ymKe_LWel3pp2AagLWyn1Osxc9UXGmGj0JvpIIl9DCYOfZ1Kv5Wkxcz354546ofzv8RzsZVGyqU', '2026-04-18 15:20:58', '2026-06-20 18:01:53'),
+(16, 'riyaki', '$2b$10$N1dYpgjQflbj5vX4YFHEI.7rOv6HlO6ZMnR3R0iR.wJxub9J2DWKS', 'Huỳnh Ngọc Bảo Trường', 'truongyasuo@gmail.com', '0819033106', '11 leloi', 'CUSTOMER', 1, 'dwBz79fgR2m242rAdfvJVe:APA91bER_klXphMUyMKIZzIRz0CJqkdINeeK9t3s3FOunBrIbitDaDgARsmhruNbzyy-Z0oNr1OiORFhGCC-uWq1SUZxfGlxiIfHhAY7v3NJ-cIP2_tVgGU', '2026-05-15 11:13:19', '2026-06-20 18:24:32');
 
 --
 -- Chỉ mục cho các bảng đã đổ
@@ -287,25 +299,25 @@ ALTER TABLE `categories`
 -- AUTO_INCREMENT cho bảng `favorite_products`
 --
 ALTER TABLE `favorite_products`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT cho bảng `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT cho bảng `orders`
 --
 ALTER TABLE `orders`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT cho bảng `order_details`
 --
 ALTER TABLE `order_details`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT cho bảng `products`
